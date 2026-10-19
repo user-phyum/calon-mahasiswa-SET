@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualisasi Minat Calon Mahasiswa - S1 Sains Energi Terbarukan</title>
+    
+    <!-- Favicon UM -->
+    <link rel="icon" type="image/jpeg" href="https://thumb.wikimedia.org/wikipedia/id/thumb/7/73/Lambang_Universitas_Negeri_Malang.jpg/1280px-Lambang_Universitas_Negeri_Malang.jpg?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=thumbnail&_=20171123143359">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -17,14 +21,14 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
         .chart-container { position: relative; height: 400px; width: 100%; }
-        /* Animasi loading */
-        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        /* Animasi loading dengan warna UM (Biru) */
+        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #1e40af; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Custom Leaflet Tooltip untuk label permanen di peta */
         .leaflet-tooltip.map-label {
             background-color: rgba(255, 255, 255, 0.95);
-            border: 1px solid #10b981;
+            border: 1px solid #1e40af;
             border-radius: 6px;
             padding: 4px 6px;
             font-family: 'Inter', sans-serif;
@@ -32,16 +36,24 @@
         }
         /* Menyesuaikan warna panah kecil di bawah label */
         .leaflet-tooltip-top.map-label::before {
-            border-top-color: #10b981;
+            border-top-color: #1e40af;
         }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
 
-    <header class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Dashboard Data Calon Mahasiswa</h1>
-            <p class="text-emerald-100 text-sm md:text-base mt-1">Program Studi S1 Sains Energi Terbarukan</p>
+    <!-- Header dengan Gradien Dinamis UM (Biru, Hijau, Kuning) dan Logo -->
+    <header class="bg-gradient-to-r from-blue-800 via-emerald-600 to-yellow-500 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center gap-4">
+                <div class="shrink-0 bg-white p-1.5 rounded-full shadow-md">
+                    <img src="https://thumb.wikimedia.org/wikipedia/id/thumb/7/73/Lambang_Universitas_Negeri_Malang.jpg/1280px-Lambang_Universitas_Negeri_Malang.jpg?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=thumbnail&_=20171123143359" alt="Logo Universitas Negeri Malang" class="h-12 w-12 md:h-14 md:w-14 object-contain rounded-full">
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">Dashboard Data Calon Mahasiswa</h1>
+                    <p class="text-blue-50 font-medium text-sm md:text-base mt-0.5 drop-shadow-sm">Program Studi S1 Sains Energi Terbarukan</p>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -65,13 +77,13 @@
             <!-- PINTASAN CEPAT -->
             <div class="glass-panel rounded-2xl shadow-sm p-6 mb-6 border border-slate-200">
                 <div class="flex items-center mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-700 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     <h2 class="text-md font-bold text-slate-800">Pintasan Visualisasi Cepat</h2>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <button id="btn-provinsi" class="bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 font-medium py-2 px-4 rounded-lg shadow-sm transition text-sm flex items-center">
+                    <button id="btn-provinsi" class="bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-medium py-2 px-4 rounded-lg shadow-sm transition text-sm flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Tampilkan Diagram Provinsi
                     </button>
@@ -91,7 +103,7 @@
                     <!-- Kategori Utama (Pivot) -->
                     <div class="col-span-1">
                         <label for="category-select" class="block text-sm font-semibold text-slate-700 mb-2">Kategori Grafik (Sumbu X)</label>
-                        <select id="category-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-white cursor-pointer transition">
+                        <select id="category-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white cursor-pointer transition">
                             <option value="">Memuat kolom...</option>
                         </select>
                         <p class="text-xs text-slate-500 mt-1">Pilih kolom yang akan dihitung totalnya.</p>
@@ -100,7 +112,7 @@
                     <!-- Filter Kolom -->
                     <div class="col-span-1">
                         <label for="filter-col-select" class="block text-sm font-semibold text-slate-700 mb-2">Terapkan Filter Data Berdasarkan</label>
-                        <select id="filter-col-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-white cursor-pointer transition">
+                        <select id="filter-col-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white cursor-pointer transition">
                             <option value="">-- Tanpa Filter --</option>
                         </select>
                     </div>
@@ -108,14 +120,14 @@
                     <!-- Filter Nilai -->
                     <div class="col-span-1">
                         <label for="filter-val-select" class="block text-sm font-semibold text-slate-700 mb-2">Pilih Nilai Filter</label>
-                        <select id="filter-val-select" disabled class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-slate-100 cursor-not-allowed transition">
+                        <select id="filter-val-select" disabled class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-slate-100 cursor-not-allowed transition">
                             <option value="">-- Pilih filter terlebih dahulu --</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="mt-6 flex justify-end">
-                    <button id="apply-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:-translate-y-0.5">Terapkan Visualisasi</button>
+                    <button id="apply-btn" class="bg-gradient-to-r from-blue-700 to-emerald-600 hover:from-blue-800 hover:to-emerald-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:-translate-y-0.5">Terapkan Visualisasi</button>
                 </div>
             </div>
 
@@ -156,7 +168,7 @@
             <!-- Peta Sebaran Provinsi (disembunyikan secara default) -->
             <div id="map-container" class="hidden glass-panel rounded-2xl shadow-sm p-6 mt-8 border border-slate-200 transition-all duration-500 ease-in-out">
                 <div class="flex items-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
                     <h3 class="text-lg font-bold text-slate-800">Peta Sebaran Wilayah Calon Mahasiswa</h3>
@@ -169,7 +181,7 @@
             <!-- Summary Stats -->
             <div class="glass-panel rounded-2xl shadow-sm p-6 mt-8 border border-slate-200">
                 <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Data Berdasarkan Filter Saat Ini</h3>
-                <p class="text-4xl font-extrabold text-emerald-600" id="total-data">0</p>
+                <p class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-emerald-500" id="total-data">0</p>
             </div>
         </div>
     </main>
@@ -615,7 +627,7 @@
                     
                     const marker = L.circleMarker(coords, {
                         radius: radius,
-                        fillColor: '#10b981', // Hijau Emerald khas tema app
+                        fillColor: '#1e40af', // Warna Biru Khas UM
                         color: '#ffffff',
                         weight: 2,
                         opacity: 1,
@@ -628,7 +640,7 @@
                     // Menambahkan Label Tooltip yang akan selalu tampil (Permanen) - Hanya Persentase
                     marker.bindTooltip(`
                         <div class="text-center leading-none">
-                            <span class="text-xs font-bold text-emerald-600">${percentage}%</span>
+                            <span class="text-xs font-bold text-blue-700">${percentage}%</span>
                         </div>
                     `, {
                         permanent: true,
@@ -642,8 +654,8 @@
                         <div class="text-center p-1 min-w-[120px]">
                             <strong class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-1 block mb-1">${label}</strong>
                             <div class="flex items-center justify-center gap-2 mt-1">
-                                <span class="text-xl text-emerald-600 font-extrabold leading-none">${count}</span>
-                                <span class="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">${percentage}%</span>
+                                <span class="text-xl text-blue-700 font-extrabold leading-none">${count}</span>
+                                <span class="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">${percentage}%</span>
                             </div>
                             <span class="text-[10px] text-slate-500 uppercase tracking-wider mt-1 block">calon mahasiswa</span>
                         </div>
