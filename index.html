@@ -3,28 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualisasi Minat Calon Mahasiswa - S1 Sains Energi Terbarukan</title>
+    <title>Visualisasi Minat Calon Mahasiswa - S1 Sains Energi Terbarukan UM</title>
+    
+    <!-- Favicon UM -->
+    <link rel="icon" href="https://thumb.wikimedia.org/wikipedia/id/thumb/7/73/Lambang_Universitas_Negeri_Malang.jpg/1280px-Lambang_Universitas_Negeri_Malang.jpg" type="image/jpeg">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Leaflet CSS & JS untuk Peta -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
         .chart-container { position: relative; height: 400px; width: 100%; }
-        /* Animasi loading */
-        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        
+        /* Animasi loading warna UM */
+        .loader { border: 4px solid #e2e8f0; border-top: 4px solid #0284c7; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Marker Peta (Persentase) */
+        .map-label {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid #0284c7;
+            border-radius: 20px;
+            color: #0f172a;
+            font-weight: bold;
+            font-size: 11px;
+            text-align: center;
+            padding: 2px 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        
+        /* Fix z-index peta agar tidak menutupi header */
+        #map { z-index: 10; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
 
-    <header class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Dashboard Data Calon Mahasiswa</h1>
-            <p class="text-emerald-100 text-sm md:text-base mt-1">Program Studi S1 Sains Energi Terbarukan</p>
+    <!-- Header Tema UM (Biru, Hijau, Kuning) -->
+    <header class="bg-gradient-to-r from-blue-800 via-emerald-600 to-amber-500 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
+            <img src="https://thumb.wikimedia.org/wikipedia/id/thumb/7/73/Lambang_Universitas_Negeri_Malang.jpg/1280px-Lambang_Universitas_Negeri_Malang.jpg" alt="Logo UM" class="w-14 h-14 object-contain bg-white rounded-full p-1 shadow-md">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight drop-shadow-md">Dashboard Data Calon Mahasiswa</h1>
+                <p class="text-white text-sm md:text-base mt-0.5 font-medium drop-shadow">S1 Sains Energi Terbarukan - Universitas Negeri Malang</p>
+            </div>
         </div>
     </header>
 
@@ -40,14 +71,14 @@
             <p id="error-text" class="text-sm mt-1"></p>
             <div class="mt-4">
                 <p class="text-sm font-medium mb-2">Alternatif: Unggah file CSV dari Spreadsheet tersebut secara manual</p>
-                <input type="file" id="csv-upload" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                <input type="file" id="csv-upload" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
             </div>
         </div>
 
         <div id="dashboard-content" class="hidden">
-            <div class="glass-panel rounded-2xl shadow-sm p-6 mb-8 border border-slate-200">
+            <div class="glass-panel rounded-2xl shadow-sm p-6 mb-8">
                 <div class="flex items-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                     </svg>
                     <h2 class="text-lg font-bold text-slate-800">Panel Filter & Pivot Analisis</h2>
@@ -57,7 +88,7 @@
                     <!-- Kategori Utama (Pivot) -->
                     <div class="col-span-1">
                         <label for="category-select" class="block text-sm font-semibold text-slate-700 mb-2">Kategori Grafik (Sumbu X)</label>
-                        <select id="category-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-white cursor-pointer transition">
+                        <select id="category-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white cursor-pointer transition">
                             <option value="">Memuat kolom...</option>
                         </select>
                         <p class="text-xs text-slate-500 mt-1">Pilih kolom yang akan dihitung totalnya.</p>
@@ -66,7 +97,7 @@
                     <!-- Filter Kolom -->
                     <div class="col-span-1">
                         <label for="filter-col-select" class="block text-sm font-semibold text-slate-700 mb-2">Terapkan Filter Data Berdasarkan</label>
-                        <select id="filter-col-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-white cursor-pointer transition">
+                        <select id="filter-col-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white cursor-pointer transition">
                             <option value="">-- Tanpa Filter --</option>
                         </select>
                     </div>
@@ -74,20 +105,39 @@
                     <!-- Filter Nilai -->
                     <div class="col-span-1">
                         <label for="filter-val-select" class="block text-sm font-semibold text-slate-700 mb-2">Pilih Nilai Filter</label>
-                        <select id="filter-val-select" disabled class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-slate-100 cursor-not-allowed transition">
+                        <select id="filter-val-select" disabled class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-slate-100 cursor-not-allowed transition">
                             <option value="">-- Pilih filter terlebih dahulu --</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="mt-6 flex justify-end">
-                    <button id="apply-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:-translate-y-0.5">Terapkan Visualisasi</button>
+                    <button id="apply-btn" class="bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:-translate-y-0.5">Terapkan Visualisasi</button>
+                </div>
+            </div>
+
+            <!-- Peta Sebaran Provinsi -->
+            <div class="glass-panel rounded-2xl shadow-sm p-6 mb-8 flex flex-col" id="map-container-wrapper">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Peta Sebaran Asal Provinsi</h3>
+                        <p class="text-xs text-slate-500 mt-1">Menampilkan persentase secara langsung. Klik pin untuk melihat jumlah.</p>
+                    </div>
+                    <button onclick="downloadMapPNG()" class="flex items-center text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 py-1.5 px-3 rounded border border-blue-200 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        High-Res PNG
+                    </button>
+                </div>
+                <div class="flex-grow bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                    <div id="map" style="height: 450px; width: 100%;"></div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Bar Chart -->
-                <div class="glass-panel rounded-2xl shadow-sm p-6 border border-slate-200 flex flex-col">
+                <div class="glass-panel rounded-2xl shadow-sm p-6 flex flex-col">
                     <div class="flex justify-between items-start mb-4">
                         <h3 class="text-lg font-bold text-slate-800" id="bar-title">Diagram Batang</h3>
                         <button onclick="downloadChart('barChart', 'Diagram_Batang')" class="flex items-center text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded border border-slate-300 transition">
@@ -103,7 +153,7 @@
                 </div>
 
                 <!-- Pie Chart -->
-                <div class="glass-panel rounded-2xl shadow-sm p-6 border border-slate-200 flex flex-col">
+                <div class="glass-panel rounded-2xl shadow-sm p-6 flex flex-col">
                     <div class="flex justify-between items-start mb-4">
                         <h3 class="text-lg font-bold text-slate-800" id="pie-title">Diagram Lingkaran</h3>
                         <button onclick="downloadChart('pieChart', 'Diagram_Lingkaran')" class="flex items-center text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded border border-slate-300 transition">
@@ -120,24 +170,22 @@
             </div>
             
             <!-- Summary Stats -->
-            <div class="glass-panel rounded-2xl shadow-sm p-6 mt-8 border border-slate-200">
+            <div class="glass-panel rounded-2xl shadow-sm p-6 mt-8">
                 <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Data Berdasarkan Filter Saat Ini</h3>
-                <p class="text-4xl font-extrabold text-emerald-600" id="total-data">0</p>
+                <p class="text-4xl font-extrabold text-blue-700" id="total-data">0</p>
             </div>
 
             <!-- Tabel Dinamis -->
-            <div class="glass-panel rounded-2xl shadow-sm p-6 mt-8 border border-slate-200">
+            <div class="glass-panel rounded-2xl shadow-sm p-6 mt-8">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                     <h3 class="text-lg font-bold text-slate-800" id="table-title">Tabel Rincian Data</h3>
                     
                     <div class="flex flex-wrap items-center gap-4">
-                        <!-- Toggle Kolom Jumlah -->
                         <label class="flex items-center text-sm font-medium text-slate-600 cursor-pointer select-none">
-                            <input type="checkbox" id="toggle-count" class="mr-2 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 transition" checked>
+                            <input type="checkbox" id="toggle-count" class="mr-2 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 transition" checked>
                             Tampilkan Nilai (Jumlah)
                         </label>
 
-                        <!-- Tombol Download Tabel -->
                         <button onclick="downloadTablePNG()" class="flex items-center text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded border border-slate-300 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -157,7 +205,6 @@
                             </tr>
                         </thead>
                         <tbody id="data-table-body" class="text-sm text-slate-600 divide-y divide-slate-100">
-                            <!-- Data tabel akan dirender melalui JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -166,7 +213,6 @@
     </main>
 
     <script>
-        // Konfigurasi Google Sheets
         const sheetId = '1gPgybX52FoJObumAjzWPDkOHvl9SmgknInjUSFlH1sM';
         const sheetName = encodeURIComponent('Calon Mahasiswa');
         const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
@@ -175,11 +221,29 @@
         let headers = [];
         let barChartInstance = null;
         let pieChartInstance = null;
+        let leafletMap = null;
+        let mapMarkers = [];
 
-        // Registrasi plugin datalabels ke Chart.js
+        // Koordinat titik tengah Provinsi di Indonesia
+        const provinceCoords = {
+            "Aceh": [4.6951, 96.8225], "Sumatera Utara": [2.1154, 99.5451], "Sumatera Barat": [-0.7399, 100.8000],
+            "Riau": [0.2933, 101.7068], "Jambi": [-1.6101, 103.6131], "Sumatera Selatan": [-3.1270, 104.0470],
+            "Bengkulu": [-3.7928, 102.2608], "Lampung": [-4.5586, 105.4068], "Kepulauan Bangka Belitung": [-2.7411, 106.4406],
+            "Kepulauan Riau": [3.9456, 108.1429], "DKI Jakarta": [-6.2088, 106.8456], "Jawa Barat": [-6.9147, 107.6098],
+            "Jawa Tengah": [-7.1509, 110.1403], "DI Yogyakarta": [-7.7956, 110.3695], "Jawa Timur": [-7.5360, 112.2384],
+            "Banten": [-6.4058, 106.0640], "Bali": [-8.4095, 115.1889], "Nusa Tenggara Barat": [-8.6529, 117.3616],
+            "Nusa Tenggara Timur": [-8.6500, 121.0833], "Kalimantan Barat": [-0.2787, 111.4753],
+            "Kalimantan Tengah": [-1.5370, 113.8185], "Kalimantan Selatan": [-3.0926, 115.2838],
+            "Kalimantan Timur": [0.5387, 116.4194], "Kalimantan Utara": [3.0731, 116.0414],
+            "Sulawesi Utara": [0.6247, 123.9750], "Sulawesi Tengah": [-1.4300, 121.4456],
+            "Sulawesi Selatan": [-3.6688, 119.9741], "Sulawesi Tenggara": [-4.1449, 122.1746],
+            "Gorontalo": [0.6999, 122.4467], "Sulawesi Barat": [-2.8441, 119.2321],
+            "Maluku": [-3.2385, 130.1453], "Maluku Utara": [1.5709, 127.8088],
+            "Papua Barat": [-1.3361, 133.1747], "Papua": [-4.2699, 138.0804]
+        };
+
         Chart.register(ChartDataLabels);
 
-        // Elemen DOM
         const loadingEl = document.getElementById('loading');
         const errorEl = document.getElementById('error-message');
         const errorText = document.getElementById('error-text');
@@ -190,36 +254,25 @@
         const filterValSelect = document.getElementById('filter-val-select');
         const applyBtn = document.getElementById('apply-btn');
         const csvUpload = document.getElementById('csv-upload');
-        const toggleCountCheckbox = document.getElementById('toggle-count');
-        const thJumlah = document.getElementById('th-jumlah');
 
-        // Event listener untuk toggle jumlah
-        toggleCountCheckbox.addEventListener('change', function() {
+        document.getElementById('toggle-count').addEventListener('change', function() {
             const isChecked = this.checked;
-            // Toggle bagian header (th)
-            thJumlah.style.display = isChecked ? '' : 'none';
-            
-            // Toggle seluruh kolom pada isi data (td)
-            const tdJumlahs = document.querySelectorAll('.td-jumlah');
-            tdJumlahs.forEach(td => {
-                td.style.display = isChecked ? '' : 'none';
-            });
+            document.getElementById('th-jumlah').style.display = isChecked ? '' : 'none';
+            document.querySelectorAll('.td-jumlah').forEach(td => { td.style.display = isChecked ? '' : 'none'; });
         });
 
-        function isMultiValueColumn(colName) {
-            if (!colName) return false;
-            const lowerCol = colName.toLowerCase();
-            return lowerCol.includes('alasan saudara berminat') || 
-                   lowerCol.includes('kompetensi yang saudara harapkan');
-        }
-
-        // Fungsi baru untuk membersihkan dan menstandarisasi data
+        // ============================
+        // PEMBERSIHAN & STANDARISASI DATA
+        // ============================
         function getCleanValues(val, colName) {
-            if (!val || val.trim() === '') return ['Lainnya']; // Kosong dialihkan ke Lainnya
+            if (!val || val.trim() === '') return ['Lainnya'];
+            
+            const lowerCol = (colName || "").toLowerCase();
+            const isMulti = lowerCol.includes('alasan saudara berminat') || lowerCol.includes('kompetensi yang saudara harapkan');
             
             let parts = [];
-            if (isMultiValueColumn(colName)) {
-                // Regex: Pisahkan dengan koma, KECUALI koma tersebut berada di dalam tanda kurung ()
+            if (isMulti) {
+                // Pisah koma KECUALI yang ada dalam tanda kurung
                 parts = val.split(/,\s*(?![^()]*\))/).map(v => v.trim());
             } else {
                 parts = [val.trim()];
@@ -228,7 +281,7 @@
             return parts.map(p => {
                 const lowerP = p.toLowerCase();
                 
-                // Filter kategori "Lainnya" dan string yang tidak relevan
+                // Jika mengandung unsur "lainnya", "tidak ada data", dsb => jadikan "Lainnya"
                 if (lowerP.startsWith('lainnya') || 
                     lowerP.includes('agar energi terbarukan bisa dikembangka') || 
                     lowerP.includes('belum pernah tau') ||
@@ -237,7 +290,7 @@
                     return 'Lainnya';
                 }
                 
-                // Perlindungan khusus untuk opsi fisika agar tidak terpotong koma
+                // Pertahankan kalimat utuh untuk "Tertarik fisika..."
                 if (lowerP.includes('tertarik fisika dan teknologi energi')) {
                     return 'Tertarik fisika dan teknologi energi (surya baterai hidrogen)';
                 }
@@ -250,17 +303,12 @@
             try {
                 const response = await fetch(csvUrl);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
                 const csvText = await response.text();
-                
-                // Deteksi apabila sheet tidak diset public (kembali ke halaman login HTML)
                 if (csvText.trim().toLowerCase().startsWith('<!doctype html>')) {
-                    throw new Error("Akses ditolak oleh Google. Pastikan Share Spreadsheet diubah menjadi 'Anyone with the link can view' (Siapa saja yang memiliki link).");
+                    throw new Error("Akses ditolak oleh Google. Pastikan Share Spreadsheet diubah menjadi 'Anyone with the link can view'.");
                 }
-
                 parseData(csvText);
             } catch (error) {
-                console.error("Fetch error: ", error);
                 loadingEl.classList.add('hidden');
                 errorEl.classList.remove('hidden');
                 errorText.innerText = error.message;
@@ -274,11 +322,7 @@
                 complete: function(results) {
                     rawData = results.data;
                     headers = results.meta.fields;
-                    
-                    if (rawData.length === 0 || headers.length === 0) {
-                        throw new Error("Data kosong atau format tabel tidak dikenali.");
-                    }
-                    
+                    if (rawData.length === 0 || headers.length === 0) throw new Error("Data kosong atau format tabel tidak dikenali.");
                     setupDashboard();
                 },
                 error: function(err) {
@@ -289,19 +333,13 @@
             });
         }
 
-        // Handle upload CSV fallback
         csvUpload.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            
             errorEl.classList.add('hidden');
             loadingEl.classList.remove('hidden');
-            
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const contents = e.target.result;
-                parseData(contents);
-            };
+            reader.onload = function(e) { parseData(e.target.result); };
             reader.readAsText(file);
         });
 
@@ -310,41 +348,27 @@
             errorEl.classList.add('hidden');
             dashboardEl.classList.remove('hidden');
 
-            // Bersihkan dropdown
             categorySelect.innerHTML = '';
             filterColSelect.innerHTML = '<option value="">-- Tanpa Filter --</option>';
 
-            // Isi dropdown dengan header dari spreadsheet
-            headers.forEach((header, index) => {
-                // Abaikan kolom Timestamp jika ada
+            headers.forEach(header => {
                 if (header.toLowerCase() !== 'timestamp') {
                     categorySelect.add(new Option(header, header));
                     filterColSelect.add(new Option(header, header));
                 }
             });
 
-            // Set default kategori
-            if (headers.length > 0) {
-                categorySelect.selectedIndex = 0;
-            }
+            if (headers.length > 0) categorySelect.selectedIndex = 0;
 
-            // Event listener untuk filter value
             filterColSelect.addEventListener('change', function() {
                 const col = this.value;
                 filterValSelect.innerHTML = '<option value="">-- Semua --</option>';
-                
                 if (col) {
-                    // Ambil nilai unik dari kolom tersebut dan pisahkan dengan koma jika kolom multi-nilai
                     const uniqueValues = new Set();
                     rawData.forEach(item => {
-                        const cleanVals = getCleanValues(item[col], col);
-                        cleanVals.forEach(v => uniqueValues.add(v));
+                        getCleanValues(item[col], col).forEach(v => uniqueValues.add(v));
                     });
-                    
-                    const sortedValues = Array.from(uniqueValues).sort();
-                    sortedValues.forEach(val => {
-                        filterValSelect.add(new Option(val, val));
-                    });
+                    Array.from(uniqueValues).sort().forEach(val => filterValSelect.add(new Option(val, val)));
                     
                     filterValSelect.disabled = false;
                     filterValSelect.classList.remove('bg-slate-100', 'cursor-not-allowed');
@@ -357,11 +381,68 @@
             });
 
             applyBtn.addEventListener('click', updateVisualizations);
-
-            // Render chart pertama kali
+            initMap();
             updateVisualizations();
         }
 
+        // ============================
+        // MAPS LEAFLET
+        // ============================
+        function initMap() {
+            leafletMap = L.map('map').setView([-2.5489, 118.0149], 5); // Center Indonesia
+            // Gunakan basemap Esri Light Gray yang elegan (crossOrigin diset true agar bisa di-download canvasnya)
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+                maxZoom: 16,
+                crossOrigin: true
+            }).addTo(leafletMap);
+        }
+
+        function updateMap(processedData) {
+            // Bersihkan marker lama
+            mapMarkers.forEach(m => leafletMap.removeLayer(m));
+            mapMarkers = [];
+
+            // Cari kolom yang mengandung kata 'provinsi'
+            const provCol = headers.find(h => h.toLowerCase().includes('provinsi'));
+            if (!provCol) return; // Jika tidak ada kolom provinsi, abaikan map
+
+            const provCount = {};
+            processedData.forEach(row => {
+                const val = (row[provCol] || '').trim();
+                // Deteksi nama provinsi yang mirip dari object provinceCoords
+                const match = Object.keys(provinceCoords).find(p => p.toLowerCase() === val.toLowerCase() || val.toLowerCase().includes(p.toLowerCase()));
+                if (match) {
+                    provCount[match] = (provCount[match] || 0) + 1;
+                }
+            });
+
+            const totalFiltered = processedData.length;
+
+            Object.keys(provCount).forEach(prov => {
+                const count = provCount[prov];
+                const pct = ((count / totalFiltered) * 100).toFixed(1) + '%';
+                const coords = provinceCoords[prov];
+
+                // Buat custom ikon HTML yang menampilkan persentase secara statis (tanpa di-hover)
+                const icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div class="map-label">${pct}</div>`,
+                    iconSize: [40, 20],
+                    iconAnchor: [20, 10]
+                });
+
+                const marker = L.marker(coords, { icon: icon }).addTo(leafletMap);
+                
+                // Popup saat di klik menunjukkan jumlah riil
+                marker.bindPopup(`<b>${prov}</b><br>Jumlah: ${count} Pendaftar<br>Proporsi: ${pct}`);
+                mapMarkers.push(marker);
+            });
+        }
+
+        // ============================
+        // VISUALISASI UTAMA
+        // ============================
         function updateVisualizations() {
             const categoryCol = categorySelect.value;
             const filterCol = filterColSelect.value;
@@ -372,114 +453,57 @@
             // 1. Filter Data
             let processedData = rawData;
             if (filterCol && filterVal) {
-                processedData = processedData.filter(row => {
-                    const cleanVals = getCleanValues(row[filterCol], filterCol);
-                    return cleanVals.includes(filterVal);
-                });
+                processedData = processedData.filter(row => getCleanValues(row[filterCol], filterCol).includes(filterVal));
             }
 
-            // Update Total
             document.getElementById('total-data').innerText = processedData.length;
             document.getElementById('bar-title').innerText = `Jumlah Berdasarkan: ${categoryCol}`;
 
-            // 2. Pivot / Aggregation (Grouping data by category)
+            // Update Peta
+            updateMap(processedData);
+
+            // 2. Pivot Aggregation
             const countMap = {};
             processedData.forEach(row => {
-                const cleanVals = getCleanValues(row[categoryCol], categoryCol);
-                cleanVals.forEach(p => {
+                getCleanValues(row[categoryCol], categoryCol).forEach(p => {
                     countMap[p] = (countMap[p] || 0) + 1;
                 });
             });
 
-            // Sort data untuk visualisasi yang lebih rapi (descending based on count)
             const sortedKeys = Object.keys(countMap).sort((a, b) => countMap[b] - countMap[a]);
             const labels = sortedKeys;
             const dataCounts = sortedKeys.map(key => countMap[key]);
 
-            // Warna untuk Chart
+            // Warna khas UM
             const backgroundColors = [
-                'rgba(16, 185, 129, 0.8)', // Emerald
-                'rgba(14, 165, 233, 0.8)', // Sky
-                'rgba(245, 158, 11, 0.8)', // Amber
-                'rgba(139, 92, 246, 0.8)', // Violet
-                'rgba(239, 68, 68, 0.8)',  // Red
-                'rgba(59, 130, 246, 0.8)', // Blue
-                'rgba(236, 72, 153, 0.8)', // Pink
-                'rgba(168, 85, 247, 0.8)'  // Purple
+                'rgba(2, 132, 199, 0.85)',   // UM Blue
+                'rgba(16, 185, 129, 0.85)',  // UM Green
+                'rgba(245, 158, 11, 0.85)',  // UM Yellow
+                'rgba(15, 23, 42, 0.85)',    // Dark Navy
+                'rgba(14, 165, 233, 0.85)',  // Light Blue
+                'rgba(5, 150, 105, 0.85)',   // Dark Green
+                'rgba(217, 119, 6, 0.85)',   // Dark Yellow
+                'rgba(71, 85, 105, 0.85)'    // Slate
             ];
-            
-            // Loop warna jika kategori sangat banyak
             const bgColorsExt = labels.map((_, i) => backgroundColors[i % backgroundColors.length]);
 
-            renderBarChart(labels, dataCounts, bgColorsExt, categoryCol);
+            renderBarChart(labels, dataCounts, bgColorsExt);
             renderPieChart(labels, dataCounts, bgColorsExt);
             renderTable(labels, dataCounts, bgColorsExt, categoryCol);
         }
 
-        function renderTable(labels, dataCounts, bgColors, categoryCol) {
-            document.getElementById('th-category').innerText = categoryCol;
-            document.getElementById('table-title').innerText = `Tabel Rincian: ${categoryCol}`;
-            
-            const tbody = document.getElementById('data-table-body');
-            tbody.innerHTML = ''; // Bersihkan isi tabel sebelumnya
-            
-            // Hitung total untuk menghitung persentase
-            const totalItems = dataCounts.reduce((sum, count) => sum + count, 0);
-            const isCountVisible = document.getElementById('toggle-count').checked;
-            
-            labels.forEach((label, index) => {
-                const count = dataCounts[index];
-                const percentage = totalItems > 0 ? ((count / totalItems) * 100).toFixed(1) : 0;
-                
-                // Gunakan warna solid (opacity 1.0) untuk bar pada tabel
-                const color = bgColors[index].replace('0.8', '1'); 
-                
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors duration-150';
-                
-                tr.innerHTML = `
-                    <td class="p-4 font-medium text-slate-700">${label}</td>
-                    <td class="p-4 text-center font-bold text-emerald-600 text-base td-jumlah" style="display: ${isCountVisible ? '' : 'none'}">${count}</td>
-                    <td class="p-4">
-                        <div class="flex items-center w-full gap-3">
-                            <span class="w-12 text-right text-xs font-bold text-slate-500">${percentage}%</span>
-                            <div class="flex-grow bg-slate-200 rounded-full h-3 overflow-hidden">
-                                <div class="h-full rounded-full transition-all duration-500 ease-out" style="width: ${percentage}%; background-color: ${color};"></div>
-                            </div>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // devicePixelRatio diset tinggi (misal: 3 atau 4) agar saat diexport jadi PNG kualitasnya sangat tajam (High-Res)
         const commonChartOptions = {
             responsive: true,
             maintainAspectRatio: false,
-            devicePixelRatio: 3, // PENTING: Resolusi 3x lipat untuk hasil download high-res
-            layout: {
-                padding: {
-                    top: 35, // Ruang tambahan di atas agar persentase tertinggi tidak terpotong
-                    bottom: 15,
-                    left: 20,
-                    right: 20
-                }
-            },
+            devicePixelRatio: 3, 
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { font: { family: "'Inter', sans-serif" } }
-                }
+                legend: { position: 'bottom', labels: { font: { family: "'Inter', sans-serif" } } }
             }
         };
 
-        function renderBarChart(labels, data, bgColors, labelName) {
+        function renderBarChart(labels, data, bgColors) {
             const ctx = document.getElementById('barChart').getContext('2d');
-            
-            if (barChartInstance) {
-                barChartInstance.destroy();
-            }
+            if (barChartInstance) barChartInstance.destroy();
 
             barChartInstance = new Chart(ctx, {
                 type: 'bar',
@@ -495,27 +519,18 @@
                 },
                 options: {
                     ...commonChartOptions,
+                    layout: { padding: { top: 30, left: 10, right: 10, bottom: 10 } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 },
-                            grace: '20%' // Menambah ruang kosong 20% di sumbu Y atas agar teks tidak nabrak
-                        }
+                        y: { beginAtZero: true, ticks: { stepSize: 1 }, grace: '25%' } // Ruang atas ekstra 25% agar label tidak terpotong
                     },
                     plugins: {
                         ...commonChartOptions.plugins,
-                        legend: { display: false }, // Sembunyikan legend untuk bar chart karena sudah jelas dari sumbu X
+                        legend: { display: false },
                         datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            offset: 4,
-                            clip: false, // Memastikan label tidak dipotong jika melewati batas chart area
-                            color: '#475569',
-                            font: { weight: 'bold', size: 11 },
+                            anchor: 'end', align: 'top', offset: 4, clip: false,
+                            color: '#1e293b', font: { weight: 'bold', size: 11 },
                             formatter: (value, ctx) => {
-                                let sum = 0;
-                                let dataArr = ctx.chart.data.datasets[0].data;
-                                dataArr.forEach(data => { sum += data; });
+                                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 if (sum === 0) return '';
                                 return (value * 100 / sum).toFixed(1) + "%";
                             }
@@ -527,13 +542,10 @@
 
         function renderPieChart(labels, data, bgColors) {
             const ctx = document.getElementById('pieChart').getContext('2d');
-            
-            if (pieChartInstance) {
-                pieChartInstance.destroy();
-            }
+            if (pieChartInstance) pieChartInstance.destroy();
 
             pieChartInstance = new Chart(ctx, {
-                type: 'doughnut', // Doughnut terlihat lebih modern dari pie klasik
+                type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
@@ -546,36 +558,29 @@
                 },
                 options: {
                     ...commonChartOptions,
-                    layout: {
-                        padding: 40 // Ruang ekstra mutlak untuk label lingkaran yang keluar agar tidak terpotong
-                    },
+                    layout: { padding: 40 },
                     plugins: {
                         ...commonChartOptions.plugins,
                         datalabels: {
                             formatter: (value, ctx) => {
-                                let sum = 0;
-                                let dataArr = ctx.chart.data.datasets[0].data;
-                                dataArr.forEach(data => { sum += data; });
+                                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 if (sum === 0) return '';
                                 return (value * 100 / sum).toFixed(1) + "%";
                             },
                             color: (ctx) => {
                                 let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 let val = ctx.chart.data.datasets[0].data[ctx.dataIndex];
-                                // Gunakan warna gelap jika ditaruh di luar, putih jika di dalam
-                                return (val * 100 / sum) < 5 ? '#475569' : '#ffffff';
+                                return (val * 100 / sum) < 6 ? '#1e293b' : '#ffffff';
                             },
                             anchor: (ctx) => {
                                 let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 let val = ctx.chart.data.datasets[0].data[ctx.dataIndex];
-                                // Posisikan di luar (end) jika terlalu sempit (< 5%)
-                                return (val * 100 / sum) < 5 ? 'end' : 'center';
+                                return (val * 100 / sum) < 6 ? 'end' : 'center';
                             },
                             align: (ctx) => {
                                 let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 let val = ctx.chart.data.datasets[0].data[ctx.dataIndex];
-                                // Sejajarkan ke arah luar dari irisan grafik
-                                return (val * 100 / sum) < 5 ? 'end' : 'center';
+                                return (val * 100 / sum) < 6 ? 'end' : 'center';
                             },
                             font: { weight: 'bold', size: 12, family: "'Inter', sans-serif" }
                         }
@@ -584,48 +589,74 @@
             });
         }
 
+        function renderTable(labels, dataCounts, bgColors, categoryCol) {
+            document.getElementById('th-category').innerText = categoryCol;
+            const tbody = document.getElementById('data-table-body');
+            tbody.innerHTML = '';
+            
+            const totalItems = dataCounts.reduce((sum, count) => sum + count, 0);
+            const isCountVisible = document.getElementById('toggle-count').checked;
+            
+            labels.forEach((label, index) => {
+                const count = dataCounts[index];
+                const percentage = totalItems > 0 ? ((count / totalItems) * 100).toFixed(1) : 0;
+                const color = bgColors[index].replace('0.85', '1'); 
+                
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors duration-150';
+                tr.innerHTML = `
+                    <td class="p-4 font-medium text-slate-700">${label}</td>
+                    <td class="p-4 text-center font-bold text-blue-700 text-base td-jumlah" style="display: ${isCountVisible ? '' : 'none'}">${count}</td>
+                    <td class="p-4">
+                        <div class="flex items-center w-full gap-3">
+                            <span class="w-12 text-right text-xs font-bold text-slate-500">${percentage}%</span>
+                            <div class="flex-grow bg-slate-200 rounded-full h-3 overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500 ease-out" style="width: ${percentage}%; background-color: ${color};"></div>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         function downloadChart(chartId, filenamePrefix) {
             const chart = chartId === 'barChart' ? barChartInstance : pieChartInstance;
             if (!chart) return;
-
-            // Chart.js memiliki metode untuk merender canvas menjadi Base64 image.
-            // Karena kita menggunakan devicePixelRatio: 3 di options, gambar akan di-generate dalam resolusi tinggi.
             const base64Img = chart.toBase64Image('image/png', 1.0);
-            
-            const categoryName = document.getElementById('category-select').value.replace(/[^a-zA-Z0-9]/g, '_');
-            const fileName = `${filenamePrefix}_${categoryName}.png`;
-
-            // Proses trigger download browser
-            const link = document.createElement('a');
-            link.href = base64Img;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            triggerDownload(base64Img, `${filenamePrefix}_${document.getElementById('category-select').value.replace(/[^a-zA-Z0-9]/g, '_')}.png`);
         }
 
         function downloadTablePNG() {
             const exportArea = document.getElementById('table-export-area');
             if (!exportArea) return;
-
-            // html2canvas merender bagian html menjadi gambar. scale 3 memberikan resolusi tinggi.
             html2canvas(exportArea, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
-                const base64Img = canvas.toDataURL('image/png', 1.0);
-                const categoryName = document.getElementById('category-select').value.replace(/[^a-zA-Z0-9]/g, '_');
-                const fileName = `Tabel_Rincian_${categoryName}.png`;
-
-                const link = document.createElement('a');
-                link.href = base64Img;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                triggerDownload(canvas.toDataURL('image/png', 1.0), `Tabel_Rincian.png`);
+            });
+        }
+        
+        // Fungsi Download Peta
+        function downloadMapPNG() {
+            const mapEl = document.getElementById('map');
+            if (!mapEl) return;
+            // Gunakan useCORS untuk mengizinkan render tile luar (Esri)
+            html2canvas(mapEl, { useCORS: true, allowTaint: true, scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                triggerDownload(canvas.toDataURL('image/png', 1.0), `Peta_Sebaran_Provinsi.png`);
             }).catch(err => {
-                console.error("Gagal mendownload tabel:", err);
+                console.error("Gagal export peta:", err);
+                alert("Terjadi kesalahan saat mengeskpor peta. Pastikan koneksi internet stabil.");
             });
         }
 
-        // Jalankan saat dokumen selesai dimuat
+        function triggerDownload(uri, filename) {
+            const link = document.createElement('a');
+            link.href = uri;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         window.onload = init;
     </script>
 </body>
