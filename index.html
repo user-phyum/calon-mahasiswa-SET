@@ -213,6 +213,39 @@
                    lowerCol.includes('kompetensi yang saudara harapkan');
         }
 
+        // Fungsi baru untuk membersihkan dan menstandarisasi data
+        function getCleanValues(val, colName) {
+            if (!val || val.trim() === '') return ['Lainnya']; // Kosong dialihkan ke Lainnya
+            
+            let parts = [];
+            if (isMultiValueColumn(colName)) {
+                // Regex: Pisahkan dengan koma, KECUALI koma tersebut berada di dalam tanda kurung ()
+                parts = val.split(/,\s*(?![^()]*\))/).map(v => v.trim());
+            } else {
+                parts = [val.trim()];
+            }
+            
+            return parts.map(p => {
+                const lowerP = p.toLowerCase();
+                
+                // Filter kategori "Lainnya" dan string yang tidak relevan
+                if (lowerP.startsWith('lainnya') || 
+                    lowerP.includes('agar energi terbarukan bisa dikembangka') || 
+                    lowerP.includes('belum pernah tau') ||
+                    lowerP === 'tidak ada data' ||
+                    lowerP === '-') {
+                    return 'Lainnya';
+                }
+                
+                // Perlindungan khusus untuk opsi fisika agar tidak terpotong koma
+                if (lowerP.includes('tertarik fisika dan teknologi energi')) {
+                    return 'Tertarik fisika dan teknologi energi (surya baterai hidrogen)';
+                }
+                
+                return p;
+            });
+        }
+
         async function init() {
             try {
                 const response = await fetch(csvUrl);
@@ -304,14 +337,8 @@
                     // Ambil nilai unik dari kolom tersebut dan pisahkan dengan koma jika kolom multi-nilai
                     const uniqueValues = new Set();
                     rawData.forEach(item => {
-                        let val = item[col];
-                        if (val && val.trim() !== '') {
-                            if (isMultiValueColumn(col)) {
-                                val.split(',').forEach(v => uniqueValues.add(v.trim()));
-                            } else {
-                                uniqueValues.add(val.trim());
-                            }
-                        }
+                        const cleanVals = getCleanValues(item[col], col);
+                        cleanVals.forEach(v => uniqueValues.add(v));
                     });
                     
                     const sortedValues = Array.from(uniqueValues).sort();
@@ -346,14 +373,8 @@
             let processedData = rawData;
             if (filterCol && filterVal) {
                 processedData = processedData.filter(row => {
-                    let rowVal = row[filterCol];
-                    if (!rowVal) return false;
-                    if (isMultiValueColumn(filterCol)) {
-                        let parts = rowVal.split(',').map(v => v.trim());
-                        return parts.includes(filterVal);
-                    } else {
-                        return rowVal.trim() === filterVal;
-                    }
+                    const cleanVals = getCleanValues(row[filterCol], filterCol);
+                    return cleanVals.includes(filterVal);
                 });
             }
 
@@ -364,21 +385,10 @@
             // 2. Pivot / Aggregation (Grouping data by category)
             const countMap = {};
             processedData.forEach(row => {
-                let val = row[categoryCol];
-                if (!val || val.trim() === '') {
-                    countMap['Tidak Ada Data'] = (countMap['Tidak Ada Data'] || 0) + 1;
-                } else {
-                    if (isMultiValueColumn(categoryCol)) {
-                        // Pecah string berdasar koma dan bersihkan spasi di awal/akhir
-                        let parts = val.split(',').map(v => v.trim());
-                        parts.forEach(p => {
-                            countMap[p] = (countMap[p] || 0) + 1;
-                        });
-                    } else {
-                        val = val.trim();
-                        countMap[val] = (countMap[val] || 0) + 1;
-                    }
-                }
+                const cleanVals = getCleanValues(row[categoryCol], categoryCol);
+                cleanVals.forEach(p => {
+                    countMap[p] = (countMap[p] || 0) + 1;
+                });
             });
 
             // Sort data untuk visualisasi yang lebih rapi (descending based on count)
