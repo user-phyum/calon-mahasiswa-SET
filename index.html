@@ -448,6 +448,14 @@
             responsive: true,
             maintainAspectRatio: false,
             devicePixelRatio: 3, // PENTING: Resolusi 3x lipat untuk hasil download high-res
+            layout: {
+                padding: {
+                    top: 35, // Ruang tambahan di atas agar persentase tertinggi tidak terpotong
+                    bottom: 15,
+                    left: 20,
+                    right: 20
+                }
+            },
             plugins: {
                 legend: {
                     position: 'bottom',
@@ -480,7 +488,8 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1 }
+                            ticks: { stepSize: 1 },
+                            grace: '20%' // Menambah ruang kosong 20% di sumbu Y atas agar teks tidak nabrak
                         }
                     },
                     plugins: {
@@ -489,6 +498,8 @@
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
+                            offset: 4,
+                            clip: false, // Memastikan label tidak dipotong jika melewati batas chart area
                             color: '#475569',
                             font: { weight: 'bold', size: 11 },
                             formatter: (value, ctx) => {
@@ -525,21 +536,38 @@
                 },
                 options: {
                     ...commonChartOptions,
+                    layout: {
+                        padding: 40 // Ruang ekstra mutlak untuk label lingkaran yang keluar agar tidak terpotong
+                    },
                     plugins: {
                         ...commonChartOptions.plugins,
                         datalabels: {
-                            color: '#ffffff',
-                            font: { weight: 'bold', size: 12, family: "'Inter', sans-serif" },
                             formatter: (value, ctx) => {
                                 let sum = 0;
                                 let dataArr = ctx.chart.data.datasets[0].data;
                                 dataArr.forEach(data => { sum += data; });
                                 if (sum === 0) return '';
-                                let percentage = (value * 100 / sum).toFixed(1);
-                                // Sembunyikan tulisan jika proporsinya terlalu kecil agar tidak tumpang tindih
-                                if (percentage < 4) return ''; 
-                                return percentage + "%";
-                            }
+                                return (value * 100 / sum).toFixed(1) + "%";
+                            },
+                            color: (ctx) => {
+                                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                let val = ctx.chart.data.datasets[0].data[ctx.dataIndex];
+                                // Gunakan warna gelap jika ditaruh di luar, putih jika di dalam
+                                return (val * 100 / sum) < 5 ? '#475569' : '#ffffff';
+                            },
+                            anchor: (ctx) => {
+                                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                let val = ctx.chart.data.datasets[0].data[ctx.dataIndex];
+                                // Posisikan di luar (end) jika terlalu sempit (< 5%)
+                                return (val * 100 / sum) < 5 ? 'end' : 'center';
+                            },
+                            align: (ctx) => {
+                                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                let val = ctx.chart.data.datasets[0].data[ctx.dataIndex];
+                                // Sejajarkan ke arah luar dari irisan grafik
+                                return (val * 100 / sum) < 5 ? 'end' : 'center';
+                            },
+                            font: { weight: 'bold', size: 12, family: "'Inter', sans-serif" }
                         }
                     }
                 }
