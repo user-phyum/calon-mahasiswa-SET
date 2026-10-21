@@ -4,56 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualisasi Minat Calon Mahasiswa - S1 Sains Energi Terbarukan</title>
-    
-    <!-- Favicon UM -->
-    <link rel="icon" type="image/jpeg" href="https://thumb.wikimedia.org/wikipedia/id/thumb/7/73/Lambang_Universitas_Negeri_Malang.jpg/1280px-Lambang_Universitas_Negeri_Malang.jpg?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=thumbnail&_=20171123143359">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    
-    <!-- Mengganti CDN Leaflet ke cdnjs untuk menghindari pemblokiran Unpkg -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
         .chart-container { position: relative; height: 400px; width: 100%; }
-        /* Animasi loading dengan warna UM (Biru) */
-        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #1e40af; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        /* Animasi loading */
+        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Custom Leaflet Tooltip untuk label permanen di peta */
-        .leaflet-tooltip.map-label {
-            background-color: rgba(255, 255, 255, 0.95);
-            border: 1px solid #1e40af;
-            border-radius: 6px;
-            padding: 4px 6px;
-            font-family: 'Inter', sans-serif;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-        }
-        /* Menyesuaikan warna panah kecil di bawah label */
-        .leaflet-tooltip-top.map-label::before {
-            border-top-color: #1e40af;
-        }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Header dengan Gradien Dinamis UM (Biru, Hijau, Kuning) dan Logo -->
-    <header class="bg-gradient-to-r from-blue-800 via-emerald-600 to-yellow-500 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex items-center gap-4">
-                <div class="shrink-0 bg-white p-1.5 rounded-full shadow-md">
-                    <img src="https://thumb.wikimedia.org/wikipedia/id/thumb/7/73/Lambang_Universitas_Negeri_Malang.jpg/1280px-Lambang_Universitas_Negeri_Malang.jpg?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=thumbnail&_=20171123143359" alt="Logo Universitas Negeri Malang" class="h-12 w-12 md:h-14 md:w-14 object-contain rounded-full">
-                </div>
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">Dashboard Data Calon Mahasiswa</h1>
-                    <p class="text-blue-50 font-medium text-sm md:text-base mt-0.5 drop-shadow-sm">Program Studi S1 Sains Energi Terbarukan</p>
-                </div>
-            </div>
+    <header class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Dashboard Data Calon Mahasiswa</h1>
+            <p class="text-emerald-100 text-sm md:text-base mt-1">Program Studi S1 Sains Energi Terbarukan</p>
         </div>
     </header>
 
@@ -74,23 +44,6 @@
         </div>
 
         <div id="dashboard-content" class="hidden">
-            <!-- PINTASAN CEPAT -->
-            <div class="glass-panel rounded-2xl shadow-sm p-6 mb-6 border border-slate-200">
-                <div class="flex items-center mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-700 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <h2 class="text-md font-bold text-slate-800">Pintasan Visualisasi Cepat</h2>
-                </div>
-                <div class="flex flex-wrap gap-3">
-                    <button id="btn-provinsi" class="bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-medium py-2 px-4 rounded-lg shadow-sm transition text-sm flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Tampilkan Diagram Provinsi
-                    </button>
-                </div>
-                <p id="shortcut-msg" class="text-xs text-red-600 mt-2 hidden font-medium"></p>
-            </div>
-
             <div class="glass-panel rounded-2xl shadow-sm p-6 mb-8 border border-slate-200">
                 <div class="flex items-center mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,7 +56,7 @@
                     <!-- Kategori Utama (Pivot) -->
                     <div class="col-span-1">
                         <label for="category-select" class="block text-sm font-semibold text-slate-700 mb-2">Kategori Grafik (Sumbu X)</label>
-                        <select id="category-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white cursor-pointer transition">
+                        <select id="category-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-white cursor-pointer transition">
                             <option value="">Memuat kolom...</option>
                         </select>
                         <p class="text-xs text-slate-500 mt-1">Pilih kolom yang akan dihitung totalnya.</p>
@@ -112,7 +65,7 @@
                     <!-- Filter Kolom -->
                     <div class="col-span-1">
                         <label for="filter-col-select" class="block text-sm font-semibold text-slate-700 mb-2">Terapkan Filter Data Berdasarkan</label>
-                        <select id="filter-col-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white cursor-pointer transition">
+                        <select id="filter-col-select" class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-white cursor-pointer transition">
                             <option value="">-- Tanpa Filter --</option>
                         </select>
                     </div>
@@ -120,14 +73,14 @@
                     <!-- Filter Nilai -->
                     <div class="col-span-1">
                         <label for="filter-val-select" class="block text-sm font-semibold text-slate-700 mb-2">Pilih Nilai Filter</label>
-                        <select id="filter-val-select" disabled class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-slate-100 cursor-not-allowed transition">
+                        <select id="filter-val-select" disabled class="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500 shadow-sm bg-slate-100 cursor-not-allowed transition">
                             <option value="">-- Pilih filter terlebih dahulu --</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="mt-6 flex justify-end">
-                    <button id="apply-btn" class="bg-gradient-to-r from-blue-700 to-emerald-600 hover:from-blue-800 hover:to-emerald-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:-translate-y-0.5">Terapkan Visualisasi</button>
+                    <button id="apply-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:-translate-y-0.5">Terapkan Visualisasi</button>
                 </div>
             </div>
 
@@ -165,23 +118,48 @@
                 </div>
             </div>
             
-            <!-- Peta Sebaran Provinsi (disembunyikan secara default) -->
-            <div id="map-container" class="hidden glass-panel rounded-2xl shadow-sm p-6 mt-8 border border-slate-200 transition-all duration-500 ease-in-out">
-                <div class="flex items-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                    </svg>
-                    <h3 class="text-lg font-bold text-slate-800">Peta Sebaran Wilayah Calon Mahasiswa</h3>
-                </div>
-                <!-- Div wajib memiliki height eksplisit agar peta Leaflet bisa dirender -->
-                <div id="map" class="w-full rounded-xl border border-slate-300 shadow-inner z-10" style="height: 450px;"></div>
-                <p class="text-xs text-slate-500 mt-3">*Semakin besar lingkaran, semakin banyak jumlah pendaftar dari provinsi tersebut.</p>
-            </div>
-
             <!-- Summary Stats -->
             <div class="glass-panel rounded-2xl shadow-sm p-6 mt-8 border border-slate-200">
                 <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Data Berdasarkan Filter Saat Ini</h3>
-                <p class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-emerald-500" id="total-data">0</p>
+                <p class="text-4xl font-extrabold text-emerald-600" id="total-data">0</p>
+            </div>
+
+            <!-- Tabel Dinamis -->
+            <div class="glass-panel rounded-2xl shadow-sm p-6 mt-8 border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                    <h3 class="text-lg font-bold text-slate-800" id="table-title">Tabel Rincian Data</h3>
+                    
+                    <div class="flex flex-wrap items-center gap-4">
+                        <!-- Toggle Kolom Jumlah -->
+                        <label class="flex items-center text-sm font-medium text-slate-600 cursor-pointer select-none">
+                            <input type="checkbox" id="toggle-count" class="mr-2 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 transition" checked>
+                            Tampilkan Nilai (Jumlah)
+                        </label>
+
+                        <!-- Tombol Download Tabel -->
+                        <button onclick="downloadTablePNG()" class="flex items-center text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded border border-slate-300 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            High-Res PNG
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto bg-white p-2 rounded-lg" id="table-export-area">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 text-sm uppercase tracking-wider">
+                                <th class="p-4 border-b-2 border-slate-200 font-semibold rounded-tl-lg" id="th-category">Kategori</th>
+                                <th class="p-4 border-b-2 border-slate-200 font-semibold text-center w-24" id="th-jumlah">Jumlah</th>
+                                <th class="p-4 border-b-2 border-slate-200 font-semibold min-w-[250px] rounded-tr-lg">Proporsi (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="text-sm text-slate-600 divide-y divide-slate-100">
+                            <!-- Data tabel akan dirender melalui JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
@@ -196,66 +174,6 @@
         let headers = [];
         let barChartInstance = null;
         let pieChartInstance = null;
-        
-        let mapInstance = null;
-        let mapMarkersLayer = null;
-
-        // Daftar koordinat (Latitude, Longitude) provinsi di Indonesia sebagai acuan peta
-        const provinceCoordinates = {
-            "aceh": [4.695135, 96.749399],
-            "sumatera utara": [2.115355, 99.545097],
-            "sumatera barat": [-0.739940, 100.800005],
-            "riau": [0.293347, 101.706829],
-            "jambi": [-1.611572, 103.613120],
-            "sumatera selatan": [-3.319437, 103.914399],
-            "bengkulu": [-3.792845, 102.260764],
-            "lampung": [-4.558585, 105.149064],
-            "kepulauan bangka belitung": [-2.741051, 106.440587],
-            "bangka belitung": [-2.741051, 106.440587],
-            "kepulauan riau": [3.945651, 108.142867],
-            "dki jakarta": [-6.208763, 106.845599],
-            "jakarta": [-6.208763, 106.845599],
-            "jawa barat": [-6.917464, 107.619123],
-            "jabar": [-6.917464, 107.619123],
-            "jawa tengah": [-7.150975, 110.140259],
-            "jateng": [-7.150975, 110.140259],
-            "di yogyakarta": [-7.795580, 110.369490],
-            "yogyakarta": [-7.795580, 110.369490],
-            "diy": [-7.795580, 110.369490],
-            "jawa timur": [-7.536064, 112.238402],
-            "jatim": [-7.536064, 112.238402],
-            "banten": [-6.405817, 106.064018],
-            "bali": [-8.409518, 115.188916],
-            "nusa tenggara barat": [-8.652933, 117.361648],
-            "ntb": [-8.652933, 117.361648],
-            "nusa tenggara timur": [-8.657382, 121.079370],
-            "ntt": [-8.657382, 121.079370],
-            "kalimantan barat": [-0.278781, 111.475285],
-            "kalbar": [-0.278781, 111.475285],
-            "kalimantan tengah": [-1.681488, 113.382355],
-            "kalteng": [-1.681488, 113.382355],
-            "kalimantan selatan": [-3.092642, 115.283759],
-            "kalsel": [-3.092642, 115.283759],
-            "kalimantan timur": [1.640630, 116.419389],
-            "kaltim": [1.640630, 116.419389],
-            "kalimantan utara": [3.073093, 116.041399],
-            "kalut": [3.073093, 116.041399],
-            "sulawesi utara": [0.624693, 123.975002],
-            "sulawesi tengah": [-1.430025, 121.445618],
-            "sulawesi selatan": [-4.144910, 119.928909],
-            "sulsel": [-4.144910, 119.928909],
-            "sulawesi tenggara": [-4.144910, 122.174605],
-            "gorontalo": [0.699937, 122.446724],
-            "sulawesi barat": [-2.844137, 119.232078],
-            "maluku": [-3.238462, 130.145273],
-            "maluku utara": [1.570999, 127.808769],
-            "papua barat": [-1.336115, 133.174716],
-            "papua": [-4.269928, 138.080353],
-            "papua selatan": [-7.5, 139.5],
-            "papua tengah": [-4.0, 136.0],
-            "papua pegunungan": [-4.5, 139.0],
-            "papua barat daya": [-1.0, 132.0]
-        };
 
         // Elemen DOM
         const loadingEl = document.getElementById('loading');
@@ -268,8 +186,21 @@
         const filterValSelect = document.getElementById('filter-val-select');
         const applyBtn = document.getElementById('apply-btn');
         const csvUpload = document.getElementById('csv-upload');
-        const btnProvinsi = document.getElementById('btn-provinsi');
-        const shortcutMsg = document.getElementById('shortcut-msg');
+        const toggleCountCheckbox = document.getElementById('toggle-count');
+        const thJumlah = document.getElementById('th-jumlah');
+
+        // Event listener untuk toggle jumlah
+        toggleCountCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            // Toggle bagian header (th)
+            thJumlah.style.display = isChecked ? '' : 'none';
+            
+            // Toggle seluruh kolom pada isi data (td)
+            const tdJumlahs = document.querySelectorAll('.td-jumlah');
+            tdJumlahs.forEach(td => {
+                td.style.display = isChecked ? '' : 'none';
+            });
+        });
 
         function isMultiValueColumn(colName) {
             if (!colName) return false;
@@ -396,36 +327,6 @@
 
             applyBtn.addEventListener('click', updateVisualizations);
 
-            // Event Listener untuk tombol Pintasan Provinsi
-            btnProvinsi.addEventListener('click', function() {
-                // Mencari kolom yang mengandung kata 'provinsi' secara otomatis
-                const provHeader = headers.find(h => h.toLowerCase().includes('provinsi'));
-                
-                if (provHeader) {
-                    categorySelect.value = provHeader;
-                    
-                    // Reset filter agar diagram provinsi tampil keseluruhan
-                    filterColSelect.value = "";
-                    filterValSelect.innerHTML = '<option value="">-- Pilih filter terlebih dahulu --</option>';
-                    filterValSelect.disabled = true;
-                    filterValSelect.classList.add('bg-slate-100', 'cursor-not-allowed');
-                    filterValSelect.classList.remove('bg-white');
-
-                    // Sembunyikan pesan error jika sebelumnya muncul
-                    shortcutMsg.classList.add('hidden');
-                    
-                    // Jalankan ulang visualisasi
-                    updateVisualizations();
-                    
-                    // Efek scroll halus ke arah diagram
-                    document.getElementById('bar-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } else {
-                    // Jika kolom provinsi tidak ada di Spreadsheet
-                    shortcutMsg.textContent = "Kolom yang memuat keterangan 'Provinsi' tidak ditemukan pada data ini.";
-                    shortcutMsg.classList.remove('hidden');
-                }
-            });
-
             // Render chart pertama kali
             updateVisualizations();
         }
@@ -498,8 +399,44 @@
 
             renderBarChart(labels, dataCounts, bgColorsExt, categoryCol);
             renderPieChart(labels, dataCounts, bgColorsExt);
+            renderTable(labels, dataCounts, bgColorsExt, categoryCol);
+        }
+
+        function renderTable(labels, dataCounts, bgColors, categoryCol) {
+            document.getElementById('th-category').innerText = categoryCol;
+            document.getElementById('table-title').innerText = `Tabel Rincian: ${categoryCol}`;
             
-            renderMap(labels, dataCounts, categoryCol);
+            const tbody = document.getElementById('data-table-body');
+            tbody.innerHTML = ''; // Bersihkan isi tabel sebelumnya
+            
+            // Hitung total untuk menghitung persentase
+            const totalItems = dataCounts.reduce((sum, count) => sum + count, 0);
+            const isCountVisible = document.getElementById('toggle-count').checked;
+            
+            labels.forEach((label, index) => {
+                const count = dataCounts[index];
+                const percentage = totalItems > 0 ? ((count / totalItems) * 100).toFixed(1) : 0;
+                
+                // Gunakan warna solid (opacity 1.0) untuk bar pada tabel
+                const color = bgColors[index].replace('0.8', '1'); 
+                
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors duration-150';
+                
+                tr.innerHTML = `
+                    <td class="p-4 font-medium text-slate-700">${label}</td>
+                    <td class="p-4 text-center font-bold text-emerald-600 text-base td-jumlah" style="display: ${isCountVisible ? '' : 'none'}">${count}</td>
+                    <td class="p-4">
+                        <div class="flex items-center w-full gap-3">
+                            <span class="w-12 text-right text-xs font-bold text-slate-500">${percentage}%</span>
+                            <div class="flex-grow bg-slate-200 rounded-full h-3 overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500 ease-out" style="width: ${percentage}%; background-color: ${color};"></div>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         // devicePixelRatio diset tinggi (misal: 3 atau 4) agar saat diexport jadi PNG kualitasnya sangat tajam (High-Res)
@@ -573,104 +510,6 @@
             });
         }
 
-        function renderMap(labels, dataCounts, categoryCol) {
-            const mapContainerWrapper = document.getElementById('map-container');
-            
-            // Cek apakah kolom saat ini memuat data "provinsi"
-            const isProvinceData = categoryCol.toLowerCase().includes('provinsi');
-            
-            if (!isProvinceData) {
-                mapContainerWrapper.classList.add('hidden');
-                return;
-            }
-            
-            mapContainerWrapper.classList.remove('hidden');
-            
-            // Inisialisasi peta hanya sekali (titik tengah berpusat di koordinat Indonesia)
-            if (!mapInstance) {
-                mapInstance = L.map('map').setView([-2.5489, 118.0149], 5);
-                
-                // Menggunakan peta dasar Esri (ArcGIS) yang gratis, stabil, dan tidak meminta API Key
-                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-                    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
-                    maxZoom: 16
-                }).addTo(mapInstance);
-                
-                mapMarkersLayer = L.layerGroup().addTo(mapInstance);
-            }
-            
-            mapMarkersLayer.clearLayers();
-            
-            // Hitung nilai maksimum untuk menentukan ukuran relatif radius lingkaran di peta
-            const maxCount = Math.max(...dataCounts) || 1;
-            
-            // Hitung total keseluruhan data yang ditampilkan di peta untuk kalkulasi persentase
-            const totalMapData = dataCounts.reduce((sum, val) => sum + val, 0);
-            
-            labels.forEach((label, index) => {
-                const count = dataCounts[index];
-                const cleanLabel = label.trim().toLowerCase();
-                
-                let coords = null;
-                
-                // Cari kecocokan nama provinsi (Eksak dan Sebagian)
-                if (provinceCoordinates[cleanLabel]) {
-                    coords = provinceCoordinates[cleanLabel];
-                } else {
-                    const matchedKey = Object.keys(provinceCoordinates).find(key => cleanLabel.includes(key) || key.includes(cleanLabel));
-                    if (matchedKey) coords = provinceCoordinates[matchedKey];
-                }
-                
-                if (coords) {
-                    // Radius: minimal 6px, maksimal 30px (berdasarkan skala perbandingan jumlah data)
-                    const radius = 6 + (count / maxCount) * 24;
-                    
-                    const marker = L.circleMarker(coords, {
-                        radius: radius,
-                        fillColor: '#1e40af', // Warna Biru Khas UM
-                        color: '#ffffff',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    });
-                    
-                    // Kalkulasi persentase dinamis
-                    const percentage = totalMapData > 0 ? ((count / totalMapData) * 100).toFixed(1) : 0;
-                    
-                    // Menambahkan Label Tooltip yang akan selalu tampil (Permanen) - Hanya Persentase
-                    marker.bindTooltip(`
-                        <div class="text-center leading-none">
-                            <span class="text-xs font-bold text-blue-700">${percentage}%</span>
-                        </div>
-                    `, {
-                        permanent: true,
-                        direction: 'top',
-                        offset: [0, -radius - 2], // Posisikan label tepat di atas lingkaran
-                        className: 'map-label'
-                    });
-
-                    // Memunculkan popup detail tambahan (Jumlah & Persentase) ketika titik provinsi diklik
-                    marker.bindPopup(`
-                        <div class="text-center p-1 min-w-[120px]">
-                            <strong class="text-sm font-bold text-slate-800 border-b border-slate-200 pb-1 block mb-1">${label}</strong>
-                            <div class="flex items-center justify-center gap-2 mt-1">
-                                <span class="text-xl text-blue-700 font-extrabold leading-none">${count}</span>
-                                <span class="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">${percentage}%</span>
-                            </div>
-                            <span class="text-[10px] text-slate-500 uppercase tracking-wider mt-1 block">calon mahasiswa</span>
-                        </div>
-                    `);
-                    
-                    mapMarkersLayer.addLayer(marker);
-                }
-            });
-            
-            // Fix bug pada Leaflet jika map diinisiasi saat containernya sedang "hidden"
-            setTimeout(() => {
-                mapInstance.invalidateSize();
-            }, 300);
-        }
-
         function downloadChart(chartId, filenamePrefix) {
             const chart = chartId === 'barChart' ? barChartInstance : pieChartInstance;
             if (!chart) return;
@@ -689,6 +528,27 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        function downloadTablePNG() {
+            const exportArea = document.getElementById('table-export-area');
+            if (!exportArea) return;
+
+            // html2canvas merender bagian html menjadi gambar. scale 3 memberikan resolusi tinggi.
+            html2canvas(exportArea, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const base64Img = canvas.toDataURL('image/png', 1.0);
+                const categoryName = document.getElementById('category-select').value.replace(/[^a-zA-Z0-9]/g, '_');
+                const fileName = `Tabel_Rincian_${categoryName}.png`;
+
+                const link = document.createElement('a');
+                link.href = base64Img;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                console.error("Gagal mendownload tabel:", err);
+            });
         }
 
         // Jalankan saat dokumen selesai dimuat
